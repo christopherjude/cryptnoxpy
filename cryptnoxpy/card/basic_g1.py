@@ -157,6 +157,18 @@ class BasicG1(base.Base):
     @property
     def initialized(self) -> bool:
         return bool(self._data[1] & BasicG1._INITIALIZATION_FLAG)
+    
+    def generate_seed_wrapper(self, size: int = 2048) -> bytes:
+        if size % 8 != 0:
+            raise exceptions.DataValidationException("Size must be a multiple of 8")
+        try:
+            size_bytes = size.to_bytes(2, 'big')  
+            print(f"Size in bits: {size}, Encoded as: {size_bytes.hex()}")
+            self.connection.send_encrypted([0x80, 0xF9, 0x00, 0x00], size_bytes,True)
+        except Exception as error:
+            raise error
+
+        
 
     def load_seed(self, seed: bytes, pin: str = "") -> None:
         if self.auth_type == base.AuthType.PIN:
@@ -358,6 +370,7 @@ class BasicG1(base.Base):
             raise
 
         return int.from_bytes(result, "big") == 0x01
+    
 
     def sign(self, data: bytes, derivation: Derivation = Derivation.CURRENT_KEY, key_type: KeyType = KeyType.K1,
              path: str = "", pin: str = "", filter_eos: bool = False) -> bytes:
