@@ -371,6 +371,20 @@ class BasicG1(base.Base):
 
         return int.from_bytes(result, "big") == 0x01
     
+    def sign_public(self, key_type: KeyType = KeyType.K1) -> bytes:
+        if self.seed_source == "NO_SEED":
+            raise exceptions.SeedException("There is no key on the card")
+
+        CLA = 0x80
+        INS = 0xC6
+        P1 = key_type.value if key_type == KeyType.R1 else KeyType.K1.value
+        P2 = 0x00
+        DATA = b""
+
+        apdu_command = [CLA, INS, P1, P2]
+        response = self.connection.send_encrypted(apdu_command, DATA, True)
+
+        return response
 
     def sign(self, data: bytes, derivation: Derivation = Derivation.CURRENT_KEY, key_type: KeyType = KeyType.K1,
              path: str = "", pin: str = "", filter_eos: bool = False) -> bytes:
